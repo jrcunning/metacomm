@@ -1,0 +1,47 @@
+---
+title: "KI"
+author: "Ross Cunning"
+date: "7/2/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(phyloseq)
+library(tidyverse)
+```
+
+```{r}
+# Load data
+## Potential non-Sym sequences have NOT been filtered out yet
+load("data/KI/KI_MetaComm_f_coral_grouped.RData")
+```
+
+```{r}
+## Rename to KI
+KI <- phy97.f.c
+```
+
+```{r}
+# Subset phyloseqs for corals, sediments, water
+KIw <- subset_samples(KI, SampleType == "water")
+KIw <- filter_taxa(KIw, function(x) sum(x) > 0, TRUE)
+KIs <- subset_samples(KI, SampleType == "sediment")
+KIs <- filter_taxa(KIs, function(x) sum(x) > 0, TRUE)
+KIc <- subset_samples(KI, !SampleType %in% c("water", "sediment"))
+KIc <- filter_taxa(KIc, function(x) sum(x) > 0, TRUE)
+```
+
+```{r}
+# Look at overlapping taxa across corals, sediments, water
+biocLite("limma")
+library(limma)
+
+w <- taxa_names(KI) %in% taxa_names(KIw)
+s <- taxa_names(KI) %in% taxa_names(KIs)
+c <- taxa_names(KI) %in% taxa_names(KIc)
+
+a <- cbind(w, s, c)
+vennDiagram(vennCounts(a))
+```

@@ -1,0 +1,59 @@
+---
+title: "AS"
+author: "Ross Cunning"
+date: "7/2/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(phyloseq)
+library(tidyverse)
+```
+
+```{r}
+# Load data
+## Potential non-Sym sequences have NOT been filtered out yet
+load("data/AS/data/phy.RData")
+```
+
+```{r}
+# Filter taxa and samples
+
+## Remove samples with less than 200 total reads
+phy2 <- prune_samples(sample_sums(phy) >= 100, phy)
+
+## Remove taxa not seen at least twice in at least two samples
+phy3 <- filter_taxa(phy2, function(x) sum(x >= 2) >= 2, TRUE)
+
+## Count number of samples remaining
+knitr::kable(table(data.frame(sample_data(phy3))$Species))
+
+## Rename to AS
+AS <- phy3
+```
+
+```{r}
+# Subset phyloseqs for corals, sediments, water
+ASw <- subset_samples(AS, Species == "water")
+ASw <- filter_taxa(ASw, function(x) sum(x) > 0, TRUE)
+ASs <- subset_samples(AS, Species == "sediment")
+ASs <- filter_taxa(ASs, function(x) sum(x) > 0, TRUE)
+ASc <- subset_samples(AS, !Species %in% c("water", "sediment"))
+ASc <- filter_taxa(ASc, function(x) sum(x) > 0, TRUE)
+```
+
+```{r}
+# Look at overlapping taxa across corals, sediments, water
+biocLite("limma")
+library(limma)
+
+w <- taxa_names(AS) %in% taxa_names(ASw)
+s <- taxa_names(AS) %in% taxa_names(ASs)
+c <- taxa_names(AS) %in% taxa_names(ASc)
+
+a <- cbind(w, s, c)
+vennDiagram(vennCounts(a))
+```
+

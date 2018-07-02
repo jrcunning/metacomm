@@ -1,0 +1,9 @@
+.RData
+.Rproj.user/
+
+
+data/AS/Cunning_PLoSONE_Dryad_Archive.zip
+data/AS/data/clust/*
+data/AS/data/fasta/*
+!data/AS/data/clust/all_rep_set_rep_set.fasta
+!data/AS/data/clust/all_rep_set_rep_set_nw_tophits.tsv
