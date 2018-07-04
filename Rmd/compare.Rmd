@@ -1,0 +1,124 @@
+---
+title: "Symbiodinium metacommunity comparisons"
+author: "Ross Cunning"
+date: "7/4/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(phyloseq)
+library(tidyverse)
+```
+
+# Import American Samoa data
+```{r import_AS}
+# Load data
+load("data/AS/data/phy.f.RData")
+
+# Rename to AS
+AS <- phy.f
+rm(phy.f)
+
+# Filter samples
+## Remove samples with less than 100 total reads
+AS <- prune_samples(sample_sums(AS) >= 100, AS)
+
+# Filter taxa
+## No taxa filtering done yet in order to compare across datasets
+#AS <- filter_taxa(AS, function(x) sum(x >= 2) >= 2, TRUE)
+#AS <- filter_taxa(AS, function(x) sum(x) > 6, TRUE)
+
+# Subset phyloseqs for corals, sediments, water
+ASw <- subset_samples(AS, Species == "water")
+ASw <- filter_taxa(ASw, function(x) sum(x) > 0, TRUE)
+ASs <- subset_samples(AS, Species == "sediment")
+ASs <- filter_taxa(ASs, function(x) sum(x) > 0, TRUE)
+ASc <- subset_samples(AS, !Species %in% c("water", "sediment"))
+ASc <- filter_taxa(ASc, function(x) sum(x) > 0, TRUE)
+```
+
+# Import Kiritimati data
+```{r import_KI}
+# Load data
+load("data/KI/KI_MetaComm.RData")  # Danielle's phyloseq after filter_notsym
+
+# Rename to KI
+KI <- phy.f
+rm(phy.f)
+
+# Filter samples
+## Remove samples with less than 100 total reads
+KI <- prune_samples(sample_sums(KI) >= 100, KI)
+
+# Filter taxa
+## No taxa filtering done yet in order to compare across datasets
+#KI <- filter_taxa(KI, function(x) sum(x >= 2) >= 2, TRUE)
+#KI <- filter_taxa(KI, function(x) sum(x) > 6, TRUE)
+
+# Subset phyloseqs for corals, sediments, water
+KIw <- subset_samples(KI, SampleType == "water")
+KIw <- filter_taxa(KIw, function(x) sum(x) > 0, TRUE)
+KIs <- subset_samples(KI, SampleType == "sediment")
+KIs <- filter_taxa(KIs, function(x) sum(x) > 0, TRUE)
+KIc <- subset_samples(KI, !SampleType %in% c("water", "sediment"))
+KIc <- filter_taxa(KIc, function(x) sum(x) > 0, TRUE)
+```
+
+# Sequencing depth in water samples by location
+```{r}
+KIw_seqdepth <- sample_sums(KIw) %>%
+  as_data_frame %>% rownames_to_column %>%
+  mutate(dataset = "KI")
+
+ASw_seqdepth <- sample_sums(ASw) %>%
+  as_data_frame %>% rownames_to_column %>%
+  mutate(dataset = "AS")
+
+w_seqdepth <- bind_rows(KIw_seqdepth, ASw_seqdepth)
+
+ggplot(w_seqdepth, aes(x = value, fill = dataset)) +
+  geom_histogram(position = "identity", alpha = 0.3) +
+  labs(title = "Read counts for water samples",
+       x = "Sequencing depth (number of reads)",
+       y = "Number of samples in dataset")
+```
+
+# Sequencing depth in sediment samples by location
+```{r}
+KIs_seqdepth <- sample_sums(KIs) %>%
+  as_data_frame %>% rownames_to_column %>%
+  mutate(dataset = "KI")
+
+ASs_seqdepth <- sample_sums(ASs) %>%
+  as_data_frame %>% rownames_to_column %>%
+  mutate(dataset = "AS")
+
+s_seqdepth <- bind_rows(KIs_seqdepth, ASs_seqdepth)
+
+ggplot(s_seqdepth, aes(x = value, fill = dataset)) +
+  geom_histogram(position = "identity", alpha = 0.3) +
+  labs(title = "Read counts for sediment samples",
+       x = "Sequencing depth (number of reads)",
+       y = "Number of samples in dataset")
+```
+
+# Sequencing depth in coral samples by location
+```{r}
+KIc_seqdepth <- sample_sums(KIc) %>%
+  as_data_frame %>% rownames_to_column %>%
+  mutate(dataset = "KI")
+
+ASc_seqdepth <- sample_sums(ASc) %>%
+  as_data_frame %>% rownames_to_column %>%
+  mutate(dataset = "AS")
+
+c_seqdepth <- bind_rows(KIc_seqdepth, ASc_seqdepth)
+
+ggplot(c_seqdepth, aes(x = value, fill = dataset)) +
+  geom_histogram(position = "identity", alpha = 0.3) +
+  labs(title = "Read counts for coral samples",
+       x = "Sequencing depth (number of reads)",
+       y = "Number of samples in dataset")
+```
